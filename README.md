@@ -1,1 +1,2 @@
-# credit-cooperation-2025
+# apniDukhan
+This is e-commerce solution for both vendor and customer.

@@ -1,0 +1,10 @@
+node_modules
+dist
+package.json
+package-lock.json
+tsconfig.json
+.env
+.env.*
+README.md
+nodemon.json
+.prettierrc.json
