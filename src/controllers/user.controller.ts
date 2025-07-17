@@ -21,10 +21,9 @@ const getUserFinanialDataForYear = asyncHandler(async (req, res) => {
   const parsedYear = validateFinancialDataRequest(serialNumber, year);
 
   const user = await findUserBySerialNumber(serialNumber);
-  createFinancialYear(user._id + EmptyValue, parsedYear);
-
+  
   const entries = await FinancialEntry.aggregate(
-    buildSingleUserFinancialDataPipeline(user._id.toString(), parsedYear),
+    buildSingleUserFinancialDataPipeline(user._id, parsedYear),
   );
 
   return res

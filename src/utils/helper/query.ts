@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { role } from "../../common/constant";
 
 export const pendingUserQuery = {
@@ -54,7 +55,7 @@ export const buildUserFinancialAggregation = (month: string, year: number) => [
   },
 ];
 
-export const buildSingleUserFinancialDataPipeline = (userId: string, year: number) => [
+export const buildSingleUserFinancialDataPipeline = (userId: Types.ObjectId, year: number) => [
   {
     $lookup: {
       from: "financialyears",
