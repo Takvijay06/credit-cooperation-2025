@@ -8,6 +8,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { createFinancialYear, getLastPendingLoan } from "../utils/helper";
 import {
   buildUserFinancialAggregation,
+  buildUsersWithLoanInMonth,
   pendingUserQuery,
   projectionFields,
 } from "../utils/helper/query";
@@ -32,12 +33,32 @@ const approveUserRequest = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   const approvedUser = await User.findOneAndUpdate(
-    { serialNumber: userId, isActive: false },
+    { serialNumber: userId, isActive: false, isEmailVerified: true },
     { $set: { isActive: true } },
     { new: true },
   );
 
   if (!approvedUser) {
+    throw new ApiError(StatusCode.BADREQUEST, errorMessages.userNotExistWithRequest);
+  }
+
+  const pendingUsers = await User.find(pendingUserQuery, projectionFields.getPendingApprovals);
+
+  return res
+    .status(StatusCode.OK)
+    .json(new ApiResponse(StatusCode.OK, pendingUsers, successMessages.userVerifiedByAdmin));
+});
+
+const deleteUserRequest = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const deletedUserRequest = await User.findOneAndUpdate(
+    { serialNumber: userId, isActive: false, isEmailVerified: false },
+    { $set: { isEmailVerified: false } },
+    { new: true },
+  );
+
+  if (!deletedUserRequest) {
     throw new ApiError(StatusCode.BADREQUEST, errorMessages.userNotExistWithRequest);
   }
 
@@ -60,6 +81,16 @@ const getUsersWithFinancialDataPerMonthPerYear = asyncHandler(async (req, res) =
     .json(
       new ApiResponse(StatusCode.OK, entries, successMessages.userFinancialDataPerMonthPerYear),
     );
+});
+
+const getLoanTakenUsersInGivenMonthYear = asyncHandler(async (req, res) => {
+  const { month, year } = req.query;
+  const { month: validMonth, year: validYear } = validateYearMonthParams(month, year);
+
+  const entries = await FinancialEntry.aggregate(buildUsersWithLoanInMonth(validMonth, validYear));
+  return res
+    .status(StatusCode.OK)
+    .json(new ApiResponse(StatusCode.OK, entries, successMessages.loanTakenUsersforMonthYear));
 });
 
 const insertEntry = asyncHandler(async (req, res) => {
@@ -116,6 +147,8 @@ const insertEntry = asyncHandler(async (req, res) => {
 export {
   getPendingApprovals,
   approveUserRequest,
+  deleteUserRequest,
   getUsersWithFinancialDataPerMonthPerYear,
   insertEntry,
+  getLoanTakenUsersInGivenMonthYear,
 };

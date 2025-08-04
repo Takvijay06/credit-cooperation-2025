@@ -55,6 +55,46 @@ export const buildUserFinancialAggregation = (month: string, year: number) => [
   },
 ];
 
+export const buildUsersWithLoanInMonth = (month: string, year: number) => [
+  {
+    $lookup: {
+      from: "financialyears",
+      localField: "yearId",
+      foreignField: "_id",
+      as: "financialYear",
+    },
+  },
+  { $unwind: "$financialYear" },
+  {
+    $match: {
+      month,
+      "financialYear.year": year,
+    },
+  },
+  {
+    $lookup: {
+      from: "users",
+      localField: "financialYear.userId",
+      foreignField: "_id",
+      as: "user",
+    },
+  },
+  { $unwind: "$user" },
+  {
+    $match: {
+      loanTaken: { $gt: 0 },
+    },
+  },
+  {
+    $project: {
+      _id: 0,
+      serialNumber: "$user.serialNumber",
+      fullName: "$user.fullName",
+      loanTaken: 1,
+    },
+  },
+];
+
 export const buildSingleUserFinancialDataPipeline = (userId: Types.ObjectId, year: number) => [
   {
     $lookup: {
@@ -99,8 +139,8 @@ export const buildSingleUserFinancialDataPipeline = (userId: Types.ObjectId, yea
 ];
 
 export const postCommands = {
-  save:"save"
-}
+  save: "save",
+};
 
 export const models = {
   user: "User",

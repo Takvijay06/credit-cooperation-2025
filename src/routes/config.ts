@@ -12,7 +12,9 @@ export const Routes = {
     path: {
       approvalRequest: "/pending-approvals",
       approveRequest: "/approve/:userId",
+      deleteRequest: "/delete/:userId",
       financialEntry: "/financial-entry",
+      usersWithLoan: "/loan-users",
     },
   },
   user: {

@@ -30,6 +30,7 @@ export const successMessages = {
   userVerifiedByAdmin: "User verified, now you can login !!!",
   entryInserted: "Entry inserted !!!",
   userFinancialDataPerMonthPerYear: "Users Financial Data Per Month Per Year fetched !!!",
+  loanTakenUsersforMonthYear: "Users with loan taken for Month Per Year fetched !!!",
   userFinancialDataPerYear: "Users Financial Data Year fetched !!!",
 };
 
@@ -52,6 +53,11 @@ export enum StatusCode {
 export enum role {
   USER = "user",
   ADMIN = "admin",
+}
+
+export enum EntryStatus {
+  PENDING = "pending",
+  DEPOSIT = "deposit"
 }
 
 export const publicFolderPath = "public";
