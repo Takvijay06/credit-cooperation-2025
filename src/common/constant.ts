@@ -34,6 +34,7 @@ export const successMessages = {
   userFinancialDataPerMonthPerYear: "Users Financial Data Per Month Per Year fetched !!!",
   loanTakenUsersforMonthYear: "Users with loan taken for Month Per Year fetched !!!",
   userFinancialDataPerYear: "Users Financial Data Year fetched !!!",
+  societyDeposit: "Society deposit for given user!!!",
 };
 
 export const emailMessages = {

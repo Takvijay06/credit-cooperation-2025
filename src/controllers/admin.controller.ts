@@ -1,4 +1,4 @@
-import { EmptyValue, errorMessages, StatusCode, successMessages } from "../common/constant";
+import { EmptyValue, EntryStatus, errorMessages, StatusCode, successMessages } from "../common/constant";
 import { FinancialEntry } from "../models/financialEntry.model";
 import { FinancialYear } from "../models/financialYear.model";
 import { User } from "../models/user.model";
@@ -214,6 +214,36 @@ const editEntry = asyncHandler(async (req, res) => {
     .json(new ApiResponse(StatusCode.OK, { updatedEntry }, successMessages.entryUpdated));
 });
 
+const depositSocietyForUser = asyncHandler(async (req, res) => {
+  const { serialNumber, year, month } = req.body;
+  validateInsertEntryInput(serialNumber, year, month);
+
+  const user = await User.findOne({ serialNumber });
+  if (!user) {
+    throw new ApiError(StatusCode.NOTFOUND, errorMessages.userNotExist);
+  }
+
+  const currentYear = await createFinancialYear(user._id + EmptyValue, year);
+
+  const existingEntry = await FinancialEntry.findOne({
+    yearId: currentYear._id,
+    month,
+  });
+
+  if (!existingEntry) {
+    throw new ApiError(StatusCode.NOTFOUND, errorMessages.entryNotFound + `${month} ${year}`);
+  }
+
+   const updatedEntry = await FinancialEntry.findOneAndUpdate(
+    { yearId: currentYear._id, month },
+    { $set: {status: EntryStatus.DEPOSIT} },
+    { new: true },
+  );
+   return res
+    .status(StatusCode.OK)
+    .json(new ApiResponse(StatusCode.OK, { updatedEntry }, successMessages.societyDeposit));
+});
+
 export {
   getPendingApprovals,
   approveUserRequest,
@@ -222,4 +252,5 @@ export {
   insertEntry,
   editEntry,
   getLoanTakenUsersInGivenMonthYear,
+  depositSocietyForUser
 };
