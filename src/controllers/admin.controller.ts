@@ -53,7 +53,7 @@ const deleteUserRequest = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   const deletedUserRequest = await User.findOneAndUpdate(
-    { serialNumber: userId, isActive: false, isEmailVerified: false },
+    { serialNumber: userId, isActive: false, isEmailVerified: true },
     { $set: { isEmailVerified: false } },
     { new: true },
   );
