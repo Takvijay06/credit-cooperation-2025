@@ -144,11 +144,82 @@ const insertEntry = asyncHandler(async (req, res) => {
     .json(new ApiResponse(StatusCode.OK, { newEntry }, successMessages.entryInserted));
 });
 
+const editEntry = asyncHandler(async (req, res) => {
+  const { serialNumber, year, month, loanTaken, fine, instalment } = req.body;
+
+  validateInsertEntryInput(serialNumber, year, month);
+
+  const user = await User.findOne({ serialNumber });
+  if (!user) {
+    throw new ApiError(StatusCode.NOTFOUND, errorMessages.userNotExist);
+  }
+
+  const currentYear = await createFinancialYear(user._id + EmptyValue, year);
+
+  const existingEntry = await FinancialEntry.findOne({
+    yearId: currentYear._id,
+    month,
+  });
+
+  if (!existingEntry) {
+    throw new ApiError(StatusCode.NOTFOUND, errorMessages.entryNotFound + `${month} ${year}`);
+  }
+
+  const updateFields: Partial<{
+    loanTaken: number;
+    fine: number;
+    instalment: number;
+    total: number;
+    pendingLoan: number;
+  }> = {};
+
+  const basePendingLoan = Number(existingEntry.pendingLoan);
+  updateFields.pendingLoan = basePendingLoan;
+  if (loanTaken !== undefined) {
+    updateFields.loanTaken = loanTaken;
+    updateFields.pendingLoan =
+      updateFields.pendingLoan - Number(existingEntry.loanTaken - loanTaken);
+  }
+  if (fine !== undefined) updateFields.fine = fine;
+  if (instalment !== undefined) updateFields.instalment = instalment;
+  if (instalment !== undefined && fine !== undefined) {
+    updateFields.total =
+      instalment + fine + Number(existingEntry.collection) + Number(existingEntry.interest);
+    updateFields.pendingLoan =
+      updateFields.pendingLoan + Number(existingEntry.instalment) - instalment;
+  } else if (instalment !== undefined) {
+    updateFields.pendingLoan =
+      updateFields.pendingLoan + Number(existingEntry.instalment) - instalment;
+    updateFields.total =
+      instalment +
+      Number(existingEntry.fine) +
+      Number(existingEntry.collection) +
+      Number(existingEntry.interest);
+  } else if (fine !== undefined) {
+    updateFields.total =
+      Number(existingEntry.instalment) +
+      fine +
+      Number(existingEntry.collection) +
+      Number(existingEntry.interest);
+  }
+
+  const updatedEntry = await FinancialEntry.findOneAndUpdate(
+    { yearId: currentYear._id, month },
+    { $set: updateFields },
+    { new: true },
+  );
+
+  return res
+    .status(StatusCode.OK)
+    .json(new ApiResponse(StatusCode.OK, { updatedEntry }, successMessages.entryUpdated));
+});
+
 export {
   getPendingApprovals,
   approveUserRequest,
   deleteUserRequest,
   getUsersWithFinancialDataPerMonthPerYear,
   insertEntry,
+  editEntry,
   getLoanTakenUsersInGivenMonthYear,
 };

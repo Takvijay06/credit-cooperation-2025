@@ -8,6 +8,7 @@ import {
   getLoanTakenUsersInGivenMonthYear,
   insertEntry,
   deleteUserRequest,
+  editEntry,
 } from "../controllers/admin.controller.js";
 import { isUserAuthenticate } from "../middlewares/auth.middleware.js";
 const { approvalRequest, approveRequest, financialEntry, usersWithLoan, deleteRequest } =
@@ -23,5 +24,6 @@ router
   .get(isUserAuthenticate, isAdmin, getUsersWithFinancialDataPerMonthPerYear);
 router.route(usersWithLoan).get(isUserAuthenticate, isAdmin, getLoanTakenUsersInGivenMonthYear);
 router.route(financialEntry).post(isUserAuthenticate, isAdmin, insertEntry);
+router.route(financialEntry).put(isUserAuthenticate,isAdmin, editEntry);
 
 export default router;

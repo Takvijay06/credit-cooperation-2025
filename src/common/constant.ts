@@ -19,6 +19,7 @@ export const errorMessages = {
   userNotExistWithRequest: "User not found with approval request",
   InvalidMonthAndYear: "Invalid month or year parameter",
   alreadyEntryFound: "Entry already exists for ",
+  entryNotFound:"Entry not found for "
 };
 
 export const successMessages = {
@@ -29,6 +30,7 @@ export const successMessages = {
   userPendingRequests: "Users with pending approvals",
   userVerifiedByAdmin: "User verified, now you can login !!!",
   entryInserted: "Entry inserted !!!",
+  entryUpdated: "Entry updated !!!",
   userFinancialDataPerMonthPerYear: "Users Financial Data Per Month Per Year fetched !!!",
   loanTakenUsersforMonthYear: "Users with loan taken for Month Per Year fetched !!!",
   userFinancialDataPerYear: "Users Financial Data Year fetched !!!",
