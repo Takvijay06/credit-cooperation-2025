@@ -49,6 +49,8 @@ export const buildUserFinancialAggregation = (month: string, year: number) => [
       instalment: 1,
       total: 1,
       pendingLoan: 1,
+      isFreezed:1,
+      status:1,
       fullName: "$user.fullName",
       serialNumber: "$user.serialNumber",
     },
