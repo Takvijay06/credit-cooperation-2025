@@ -16,6 +16,7 @@ export const Routes = {
       financialEntry: "/financial-entry",
       autoFinancialEntry: "/financial-entry-auto",
       usersWithLoan: "/loan-users",
+      freezeFinancialEntry: "/freeze/financial-entries",
     },
   },
   user: {

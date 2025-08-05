@@ -250,8 +250,6 @@ const depositSocietyForUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(StatusCode.OK, { updatedEntry }, successMessages.societyDeposit));
 });
 
-
-
 const autoInsertEntriesForMonthYear = asyncHandler(async (req, res) => {
   const { year, month } = req.body;
 
@@ -307,6 +305,42 @@ const autoInsertEntriesForMonthYear = asyncHandler(async (req, res) => {
   );
 });
 
+const freezeEntriesForMonthYear = asyncHandler(async (req, res) => {
+  const { year, month } = req.body;
+
+  if (!year || !month) {
+    throw new ApiError(StatusCode.BADREQUEST, errorMessages.InvalidMonthAndYear);
+  }
+
+  let updatedCount = 0;
+  const users = await User.find({ isEmailVerified: true, isActive: true });
+  for (const user of users) {
+    const yearDoc = await createFinancialYear(user._id + EmptyValue, year);
+    if (!yearDoc) continue;
+
+    const entry = await FinancialEntry.findOne({
+      yearId: yearDoc._id,
+      month,
+    });
+
+    if (entry && !entry.isFreezed) {
+      entry.isFreezed = true;
+      await entry.save();
+      updatedCount++;
+    }
+  }
+
+  return res
+    .status(StatusCode.OK)
+    .json(
+      new ApiResponse(
+        StatusCode.OK,
+        { updatedCount },
+        `${successMessages.autoInsertEntry}${month} ${year}`,
+      ),
+    );
+});
+
 export {
   getPendingApprovals,
   approveUserRequest,
@@ -317,4 +351,5 @@ export {
   getLoanTakenUsersInGivenMonthYear,
   depositSocietyForUser,
   autoInsertEntriesForMonthYear,
+  freezeEntriesForMonthYear,
 };
