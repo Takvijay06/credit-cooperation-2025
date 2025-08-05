@@ -73,3 +73,29 @@ export const getLastPendingLoan = async (userId: string, year: number, month: st
 
   return previousEntry.length ? previousEntry[0].pendingLoan : 0;
 };
+
+export const getPreviousMonthYear = (month: string, year: number): [string, number] => {
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  let index = monthNames.indexOf(month);
+  if (index === -1) throw new Error("Invalid month name");
+
+  if (index === 0) {
+    return ["December", year - 1];
+  }
+
+  return [monthNames[index - 1], year];
+};

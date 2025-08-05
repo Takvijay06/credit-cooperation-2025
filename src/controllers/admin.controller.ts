@@ -1,11 +1,17 @@
-import { EmptyValue, EntryStatus, errorMessages, StatusCode, successMessages } from "../common/constant";
+import {
+  EmptyValue,
+  EntryStatus,
+  errorMessages,
+  StatusCode,
+  successMessages,
+} from "../common/constant";
 import { FinancialEntry } from "../models/financialEntry.model";
 import { FinancialYear } from "../models/financialYear.model";
 import { User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
-import { createFinancialYear, getLastPendingLoan } from "../utils/helper";
+import { createFinancialYear, getLastPendingLoan, getPreviousMonthYear } from "../utils/helper";
 import {
   buildUserFinancialAggregation,
   buildUsersWithLoanInMonth,
@@ -234,14 +240,71 @@ const depositSocietyForUser = asyncHandler(async (req, res) => {
     throw new ApiError(StatusCode.NOTFOUND, errorMessages.entryNotFound + `${month} ${year}`);
   }
 
-   const updatedEntry = await FinancialEntry.findOneAndUpdate(
+  const updatedEntry = await FinancialEntry.findOneAndUpdate(
     { yearId: currentYear._id, month },
-    { $set: {status: EntryStatus.DEPOSIT} },
+    { $set: { status: EntryStatus.DEPOSIT } },
     { new: true },
   );
-   return res
+  return res
     .status(StatusCode.OK)
     .json(new ApiResponse(StatusCode.OK, { updatedEntry }, successMessages.societyDeposit));
+});
+
+
+
+const autoInsertEntriesForMonthYear = asyncHandler(async (req, res) => {
+  const { year, month } = req.body;
+
+  if (!year || !month) {
+    throw new ApiError(StatusCode.BADREQUEST, errorMessages.InvalidMonthAndYear);
+  }
+
+  const users = await User.find({ isEmailVerified: true, isActive: true });
+  const insertedEntries = [];
+  for (const user of users) {
+    const currentYear = await createFinancialYear(user._id + EmptyValue, year);
+    const [prevMonth, prevYear] = getPreviousMonthYear(month, year);
+    const prevYearDataEntry = await createFinancialYear(user._id + EmptyValue, prevYear);
+
+    const lastEntry = await FinancialEntry.findOne({
+      yearId: prevYearDataEntry?._id,
+      month: prevMonth,
+    });
+
+    const loanTaken = 0;
+    const collection = lastEntry?.collection || 0;
+    const instalment = lastEntry?.instalment || 0;
+    const fine = lastEntry?.fine || 0;
+
+    const lastPending = await getLastPendingLoan(user._id + EmptyValue, year, month);
+    const interest = (lastPending * 1) / 100;
+    const total = collection + interest + instalment + fine;
+    const pendingLoan = lastPending + loanTaken - instalment;
+
+    const newEntry = await FinancialEntry.create({
+      yearId: currentYear._id,
+      month,
+      loanTaken,
+      collection,
+      fine,
+      interest,
+      instalment,
+      total,
+      pendingLoan,
+    });
+
+    insertedEntries.push(newEntry);
+  }
+
+  return res.status(StatusCode.OK).json(
+    new ApiResponse(
+      StatusCode.OK,
+      {
+        count: insertedEntries.length,
+      },
+      `${successMessages.autoInsertEntry}${month} ${year}`,
+    ),
+  );
 });
 
 export {
@@ -252,5 +315,6 @@ export {
   insertEntry,
   editEntry,
   getLoanTakenUsersInGivenMonthYear,
-  depositSocietyForUser
+  depositSocietyForUser,
+  autoInsertEntriesForMonthYear,
 };

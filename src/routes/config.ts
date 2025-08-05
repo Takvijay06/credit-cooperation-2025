@@ -14,6 +14,7 @@ export const Routes = {
       approveRequest: "/approve/:userId",
       deleteRequest: "/delete/:userId",
       financialEntry: "/financial-entry",
+      autoFinancialEntry: "/financial-entry-auto",
       usersWithLoan: "/loan-users",
     },
   },

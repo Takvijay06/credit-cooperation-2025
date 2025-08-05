@@ -10,9 +10,10 @@ import {
   deleteUserRequest,
   editEntry,
   depositSocietyForUser,
+  autoInsertEntriesForMonthYear,
 } from "../controllers/admin.controller.js";
 import { isUserAuthenticate } from "../middlewares/auth.middleware.js";
-const { approvalRequest, approveRequest, financialEntry, usersWithLoan, deleteRequest } =
+const { approvalRequest, approveRequest, financialEntry, usersWithLoan, deleteRequest, autoFinancialEntry } =
   Routes.admin.path;
 
 const router = Router();
@@ -27,5 +28,6 @@ router.route(usersWithLoan).get(isUserAuthenticate, isAdmin, getLoanTakenUsersIn
 router.route(financialEntry).post(isUserAuthenticate, isAdmin, insertEntry);
 router.route(financialEntry).put(isUserAuthenticate, isAdmin, editEntry);
 router.route(financialEntry).patch(isUserAuthenticate, isAdmin, depositSocietyForUser);
+router.route(autoFinancialEntry).post(isUserAuthenticate, isAdmin, autoInsertEntriesForMonthYear);
 
 export default router;

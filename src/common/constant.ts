@@ -35,6 +35,7 @@ export const successMessages = {
   loanTakenUsersforMonthYear: "Users with loan taken for Month Per Year fetched !!!",
   userFinancialDataPerYear: "Users Financial Data Year fetched !!!",
   societyDeposit: "Society deposit for given user!!!",
+  autoInsertEntry:"Auto entries inserted for "
 };
 
 export const emailMessages = {
