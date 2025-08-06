@@ -6,7 +6,6 @@ import {
   successMessages,
 } from "../common/constant";
 import { FinancialEntry } from "../models/financialEntry.model";
-import { FinancialYear } from "../models/financialYear.model";
 import { User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
@@ -151,7 +150,7 @@ const insertEntry = asyncHandler(async (req, res) => {
 });
 
 const editEntry = asyncHandler(async (req, res) => {
-  const { serialNumber, year, month, loanTaken, fine, instalment } = req.body;
+  const { serialNumber, year, month, collection, loanTaken, fine, instalment } = req.body;
 
   validateInsertEntryInput(serialNumber, year, month);
 
@@ -172,6 +171,7 @@ const editEntry = asyncHandler(async (req, res) => {
   }
 
   const updateFields: Partial<{
+    collection: number;
     loanTaken: number;
     fine: number;
     instalment: number;
@@ -180,7 +180,12 @@ const editEntry = asyncHandler(async (req, res) => {
   }> = {};
 
   const basePendingLoan = Number(existingEntry.pendingLoan);
+  const baseCollection = Number(existingEntry.collection);
   updateFields.pendingLoan = basePendingLoan;
+  updateFields.collection = baseCollection;
+  if (collection !== undefined && collection !== baseCollection) {
+    updateFields.collection = collection;
+  }
   if (loanTaken !== undefined) {
     updateFields.loanTaken = loanTaken;
     updateFields.pendingLoan =
@@ -190,7 +195,7 @@ const editEntry = asyncHandler(async (req, res) => {
   if (instalment !== undefined) updateFields.instalment = instalment;
   if (instalment !== undefined && fine !== undefined) {
     updateFields.total =
-      instalment + fine + Number(existingEntry.collection) + Number(existingEntry.interest);
+      instalment + fine + updateFields.collection + Number(existingEntry.interest);
     updateFields.pendingLoan =
       updateFields.pendingLoan + Number(existingEntry.instalment) - instalment;
   } else if (instalment !== undefined) {
@@ -199,13 +204,19 @@ const editEntry = asyncHandler(async (req, res) => {
     updateFields.total =
       instalment +
       Number(existingEntry.fine) +
-      Number(existingEntry.collection) +
+      updateFields.collection +
       Number(existingEntry.interest);
   } else if (fine !== undefined) {
     updateFields.total =
       Number(existingEntry.instalment) +
       fine +
-      Number(existingEntry.collection) +
+      updateFields.collection +
+      Number(existingEntry.interest);
+  } else if (collection !== undefined) {
+    updateFields.total =
+      Number(existingEntry.instalment) +
+      Number(existingEntry.fine) +
+      collection +
       Number(existingEntry.interest);
   }
 
@@ -261,6 +272,15 @@ const autoInsertEntriesForMonthYear = asyncHandler(async (req, res) => {
   const insertedEntries = [];
   for (const user of users) {
     const currentYear = await createFinancialYear(user._id + EmptyValue, year);
+    const existingEntry = await FinancialEntry.findOne({
+      yearId: currentYear._id,
+      month,
+    });
+
+    if (existingEntry) {
+      continue; // Skip to next user
+    }
+
     const [prevMonth, prevYear] = getPreviousMonthYear(month, year);
     const prevYearDataEntry = await createFinancialYear(user._id + EmptyValue, prevYear);
 
@@ -270,7 +290,7 @@ const autoInsertEntriesForMonthYear = asyncHandler(async (req, res) => {
     });
 
     const loanTaken = 0;
-    const collection = lastEntry?.collection || 0;
+    const collection = lastEntry?.collection ?? 1000;
     const instalment = lastEntry?.instalment || 0;
     const fine = lastEntry?.fine || 0;
 
