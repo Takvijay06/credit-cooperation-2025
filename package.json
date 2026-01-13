@@ -2,7 +2,7 @@
   "name": "credit-cooperation",
   "version": "1.0.0",
   "description": "This is e-commerce solution for both vendor and customer.",
-  "main": "app.js",
+  "main": "dist/server.js",
   "type": "module",
   "scripts": {
     "start": "node dist/server.js",
