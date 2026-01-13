@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IFinancialYear } from "../common/interface";
+import { IFinancialYear } from "../common/interface.js";
 
 const FinancialYearSchema: Schema<IFinancialYear> = new Schema({
   userId: {

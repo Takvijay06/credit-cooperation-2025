@@ -5,12 +5,12 @@ import {
   months,
   otpLength,
   StatusCode,
-} from "../../common/constant";
-import { FinancialEntry } from "../../models/financialEntry.model";
-import { FinancialYear } from "../../models/financialYear.model";
-import { User } from "../../models/user.model";
-import { ApiError } from "../ApiError";
-import { html, sendMail } from "../services/sendMail";
+} from "../../common/constant.js";
+import { FinancialEntry } from "../../models/financialEntry.model.js";
+import { FinancialYear } from "../../models/financialYear.model.js";
+import { User } from "../../models/user.model.js";
+import { ApiError } from "../ApiError.js";
+import { html, sendMail } from "../services/sendMail.js";
 
 export const generateDigitOTP = (number = otpLength) => {
   const thousandValue = Math.pow(10, number - 1);

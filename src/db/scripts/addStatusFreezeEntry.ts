@@ -1,5 +1,5 @@
-import { EntryStatus } from "../../common/constant";
-import { FinancialEntry } from "../../models/financialEntry.model";
+import { EntryStatus } from "../../common/constant.js";
+import { FinancialEntry } from "../../models/financialEntry.model.js";
 import mongoose from "mongoose";
 
 //To run this script, add this line to nodemon.json

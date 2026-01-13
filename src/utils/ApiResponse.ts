@@ -1,4 +1,4 @@
-import { errorMessages, StatusCode } from "../common/constant";
+import { errorMessages, StatusCode } from "../common/constant.js";
 
 class ApiResponse {
   statusCode: number;

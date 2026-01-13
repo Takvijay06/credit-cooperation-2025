@@ -1,4 +1,4 @@
-import { isAdmin } from "../middlewares/admin.middleware";
+import { isAdmin } from "../middlewares/admin.middleware.js";
 import { Router } from "express";
 import { Routes } from "./config.js";
 import {

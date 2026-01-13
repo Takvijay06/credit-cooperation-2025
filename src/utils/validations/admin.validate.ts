@@ -1,5 +1,5 @@
-import { errorMessages, months, StatusCode } from "../../common/constant";
-import { ApiError } from "../ApiError";
+import { errorMessages, months, StatusCode } from "../../common/constant.js";
+import { ApiError } from "../ApiError.js";
 
 export const validateYearMonthParams = (
   month: unknown,

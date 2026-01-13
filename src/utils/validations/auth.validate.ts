@@ -1,7 +1,7 @@
-import { errorMessages, otpLength, StatusCode } from "../../common/constant";
-import { IUser } from "../../common/interface";
-import { User } from "../../models/user.model";
-import { ApiError } from "../ApiError";
+import { errorMessages, otpLength, StatusCode } from "../../common/constant.js";
+import { IUser } from "../../common/interface.js";
+import { User } from "../../models/user.model.js";
+import { ApiError } from "../ApiError.js";
 import bcrypt from "bcrypt";
 
 export const validateFinancialDataRequest = (serialNumber: string | undefined, year: any) => {

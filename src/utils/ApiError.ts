@@ -1,4 +1,4 @@
-import { errorMessages } from "../common/constant";
+import { errorMessages } from "../common/constant.js";
 
 class ApiError extends Error {
   statusCode: number;

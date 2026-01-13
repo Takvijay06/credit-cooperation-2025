@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { role } from "../../common/constant";
+import { role } from "../../common/constant.js";
 
 export const pendingUserQuery = {
   isEmailVerified: true,

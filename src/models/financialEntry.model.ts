@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { EntryStatus } from "../common/constant";
+import { EntryStatus } from "../common/constant.js";
 
 const FinancialEntrySchema = new mongoose.Schema({
   yearId: { type: mongoose.Schema.Types.ObjectId, ref: "FinancialYear" },

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Routes } from "./config";
-import { registerUser, userLogin, verifyEmail } from "../controllers/auth.controller";
+import { registerUser, userLogin, verifyEmail } from "../controllers/auth.controller.js";
 const { register, login, verifyOtp } = Routes.auth.path;
 
 const router = Router();

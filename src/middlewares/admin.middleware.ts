@@ -1,7 +1,7 @@
 import { NextFunction } from "express";
-import { errorMessages, role, StatusCode } from "../common/constant";
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from "../utils/asyncHandler";
+import { errorMessages, role, StatusCode } from "../common/constant.js";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const isAdmin = asyncHandler(async (req: any, _, next: NextFunction) => {
   if (req.body?.user?.role !== role.ADMIN) {

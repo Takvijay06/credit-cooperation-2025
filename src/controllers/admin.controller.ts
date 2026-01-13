@@ -4,23 +4,23 @@ import {
   errorMessages,
   StatusCode,
   successMessages,
-} from "../common/constant";
-import { FinancialEntry } from "../models/financialEntry.model";
-import { User } from "../models/user.model";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { asyncHandler } from "../utils/asyncHandler";
-import { createFinancialYear, getLastPendingLoan, getPreviousMonthYear } from "../utils/helper";
+} from "../common/constant.js";
+import { FinancialEntry } from "../models/financialEntry.model.js";
+import { User } from "../models/user.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { createFinancialYear, getLastPendingLoan, getPreviousMonthYear } from "../utils/helper/index.js";
 import {
   buildUserFinancialAggregation,
   buildUsersWithLoanInMonth,
   pendingUserQuery,
   projectionFields,
-} from "../utils/helper/query";
+} from "../utils/helper/query.js";
 import {
   validateInsertEntryInput,
   validateYearMonthParams,
-} from "../utils/validations/admin.validate";
+} from "../utils/validations/admin.validate.js";
 
 const getPendingApprovals = asyncHandler(async (_, res) => {
   const pendingApprovalUsers = await User.find(
