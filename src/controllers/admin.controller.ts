@@ -268,7 +268,7 @@ const autoInsertEntriesForMonthYear = asyncHandler(async (req, res) => {
     throw new ApiError(StatusCode.BADREQUEST, errorMessages.InvalidMonthAndYear);
   }
 
-  const users = await User.find({ isEmailVerified: true, isActive: true });
+  const users = await User.find({ isEmailVerified: true});
   const insertedEntries = [];
   for (const user of users) {
     const currentYear = await createFinancialYear(user._id + EmptyValue, year);
