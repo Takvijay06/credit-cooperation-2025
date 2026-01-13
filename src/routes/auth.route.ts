@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Routes } from "./config";
+import { Routes } from "./config.js";
 import { registerUser, userLogin, verifyEmail } from "../controllers/auth.controller.js";
 const { register, login, verifyOtp } = Routes.auth.path;
 
