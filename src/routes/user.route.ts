@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { isUserAuthenticate } from "../middlewares/auth.middleware.js";
-import { Routes } from "./config";
+import { Routes } from "./config.js";
 import { getUserFinanialDataForYear } from "../controllers/user.controller.js";
 const { financialEntry } = Routes.user.path;
 
