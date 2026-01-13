@@ -9,6 +9,7 @@
     "dev": "nodemon --config nodemon.json",
     "dev2": "nodemon",
     "build": "tsc",
+    "postinstall": "npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
