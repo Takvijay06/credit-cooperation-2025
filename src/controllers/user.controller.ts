@@ -1,34 +1,30 @@
-import { EmptyValue, successMessages } from "../common/constant.js";
+import { role, StatusCode, successMessages } from "../common/constant.js";
+import { financialEntryService, userService } from "../container.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { FinancialEntry } from "../models/financialEntry.model.js";
-import { validateFinancialDataRequest } from "../utils/validations/auth.validate.js";
-import { role } from "../common/interface.js";
-import { findUserBySerialNumber } from "../utils/helper/index.js";
-import { buildSingleUserFinancialDataPipeline } from "../utils/helper/query.js";
+import { validateFinancialDataRequest } from "../utils/validations/admin.validate.js";
 
 const getUserFinanialDataForYear = asyncHandler(async (req, res) => {
-  const { user: currentUser } = req.body;
+  const currentUser = req.user!;
   const { year, serialNumber: querySerial } = req.query;
 
   const serialNumber =
     currentUser.role === role.ADMIN
-      ? querySerial
+      ? (typeof querySerial === "string" ? querySerial : undefined)
       : currentUser.role === role.USER
-        ? currentUser.serialNumber
+        ? String(currentUser.serialNumber)
         : undefined;
 
   const parsedYear = validateFinancialDataRequest(serialNumber, year);
+  const user = await userService.findBySerialNumber(Number(serialNumber));
 
-  const user = await findUserBySerialNumber(serialNumber);
-  
-  const entries = await FinancialEntry.aggregate(
-    buildSingleUserFinancialDataPipeline(user._id, parsedYear),
-  );
+  const entries = await financialEntryService.getUserFinancialDataForYear(user.id, parsedYear);
 
   return res
-    .status(200)
-    .json(new ApiResponse(200, { entries }, successMessages.userFinancialDataPerYear));
+    .status(StatusCode.OK)
+    .json(
+      new ApiResponse(StatusCode.OK, { entries }, successMessages.userFinancialDataPerYear),
+    );
 });
 
 export { getUserFinanialDataForYear };

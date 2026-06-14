@@ -1,5 +1,5 @@
 {
   "watch": ["src"],
   "ext": "ts",
-  "exec": "node --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm src/server.ts"
+  "exec": "tsx src/server.ts"
 }

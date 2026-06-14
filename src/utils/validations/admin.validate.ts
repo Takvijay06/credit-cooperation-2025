@@ -1,6 +1,20 @@
 import { errorMessages, months, StatusCode } from "../../common/constant.js";
 import { ApiError } from "../ApiError.js";
 
+export const validateFinancialDataRequest = (serialNumber: string | undefined, year: unknown) => {
+  if (!serialNumber || !year) {
+    throw new ApiError(StatusCode.BADREQUEST, errorMessages.allFieldRequired);
+  }
+
+  const parsedYear = Number(year);
+
+  if (isNaN(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
+    throw new ApiError(StatusCode.BADREQUEST, errorMessages.invalidYear);
+  }
+
+  return parsedYear;
+};
+
 export const validateYearMonthParams = (
   month: unknown,
   year: unknown,

@@ -9,7 +9,11 @@
     "dev": "nodemon --config nodemon.json",
     "dev2": "nodemon",
     "build": "tsc",
-    "postinstall": "npm run build",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:setup": "node scripts/setup-database.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -25,6 +29,7 @@
   },
   "homepage": "https://github.com/Takvijay06/apniDukhan#readme",
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.1",
     "cookie-parser": "^1.4.7",
@@ -32,8 +37,8 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.11.0",
-    "nodemailer": "^7.0.3"
+    "nodemailer": "^7.0.3",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -44,9 +49,12 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.32",
     "@types/nodemailer": "^6.4.17",
+    "@types/swagger-ui-express": "^4.1.8",
+    "mysql2": "^3.22.4",
     "nodemon": "^3.1.9",
     "prettier": "^3.5.2",
-    "ts-node": "^10.9.2",
+    "prisma": "^6.19.3",
+    "tsx": "^4.22.3",
     "typescript": "^5.8.3"
   }
 }

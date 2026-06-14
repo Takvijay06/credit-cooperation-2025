@@ -7,6 +7,7 @@ import authRouter from "./routes/auth.route.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { Routes } from "./routes/config.js";
 import { publicFolderPath } from "./common/constant.js";
+import { setupSwagger } from "./swagger/index.js";
 
 const app = express();
 app.use(
@@ -20,6 +21,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(publicFolderPath));
 app.use(cookieParser());
+
+setupSwagger(app);
 
 app.use(Routes.auth.baseUrl, authRouter);
 app.use(Routes.admin.baseUrl, adminRouter);

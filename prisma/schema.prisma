@@ -1,0 +1,55 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id               String          @id @default(uuid())
+  serialNumber     Int             @unique
+  email            String          @unique @db.VarChar(255)
+  fullName         String          @db.VarChar(255)
+  password         String
+  role             String          @default("user") @db.VarChar(10)
+  phoneNumber      String?         @db.VarChar(20)
+  isEmailVerified  Boolean         @default(false)
+  otp              Int?
+  isActive         Boolean         @default(false)
+  emergencyPerson  String?
+  emergencyContact String?         @db.VarChar(20)
+  accessToken      String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  financialYears   FinancialYear[]
+}
+
+model FinancialYear {
+  id      String           @id @default(uuid())
+  userId  String
+  year    Int
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries FinancialEntry[]
+
+  @@unique([userId, year])
+}
+
+model FinancialEntry {
+  id          String        @id @default(uuid())
+  yearId      String
+  month       String        @db.VarChar(20)
+  loanTaken   Float
+  collection  Float
+  fine        Float
+  interest    Float?
+  instalment  Float
+  total       Float
+  pendingLoan Float
+  status      String        @default("pending") @db.VarChar(20)
+  isFreezed   Boolean       @default(false)
+  year        FinancialYear @relation(fields: [yearId], references: [id], onDelete: Cascade)
+
+  @@unique([yearId, month])
+}

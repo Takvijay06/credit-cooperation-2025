@@ -3,8 +3,8 @@ import { createTransport } from "nodemailer";
 const transporter = createTransport({
   service: process.env.EMAIL_PROVIDER ?? "gmail",
   auth: {
-    user: process.env.SENDER_EMAIL ?? "takvijay06@gmail.com",
-    pass: process.env.EMAIL_SECRET_KEY ?? "rkfw aeyv gite gydi",
+    user: process.env.SENDER_EMAIL,
+    pass: process.env.EMAIL_SECRET_KEY,
   },
 });
 
@@ -42,7 +42,7 @@ export const sendMail = async ({
   html?: string;
 }) => {
   const mailOptions = {
-    from: process.env.SENDER_EMAIL ?? "takvijay06@gmail.com",
+    from: process.env.SENDER_EMAIL,
     to,
     subject,
     text,

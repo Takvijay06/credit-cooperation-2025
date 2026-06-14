@@ -1,32 +1,15 @@
-import {
-  EmptyValue,
-  EntryStatus,
-  errorMessages,
-  StatusCode,
-  successMessages,
-} from "../common/constant.js";
-import { FinancialEntry } from "../models/financialEntry.model.js";
-import { User } from "../models/user.model.js";
+import { EntryStatus, errorMessages, StatusCode, successMessages } from "../common/constant.js";
+import { financialEntryService, userService } from "../container.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { createFinancialYear, getLastPendingLoan, getPreviousMonthYear } from "../utils/helper/index.js";
-import {
-  buildUserFinancialAggregation,
-  buildUsersWithLoanInMonth,
-  pendingUserQuery,
-  projectionFields,
-} from "../utils/helper/query.js";
 import {
   validateInsertEntryInput,
   validateYearMonthParams,
 } from "../utils/validations/admin.validate.js";
 
 const getPendingApprovals = asyncHandler(async (_, res) => {
-  const pendingApprovalUsers = await User.find(
-    pendingUserQuery,
-    projectionFields.getPendingApprovals,
-  );
+  const pendingApprovalUsers = await userService.getPendingApprovals();
   return res
     .status(StatusCode.OK)
     .json(
@@ -36,18 +19,7 @@ const getPendingApprovals = asyncHandler(async (_, res) => {
 
 const approveUserRequest = asyncHandler(async (req, res) => {
   const { userId } = req.params;
-
-  const approvedUser = await User.findOneAndUpdate(
-    { serialNumber: userId, isActive: false, isEmailVerified: true },
-    { $set: { isActive: true } },
-    { new: true },
-  );
-
-  if (!approvedUser) {
-    throw new ApiError(StatusCode.BADREQUEST, errorMessages.userNotExistWithRequest);
-  }
-
-  const pendingUsers = await User.find(pendingUserQuery, projectionFields.getPendingApprovals);
+  const pendingUsers = await userService.approveUser(Number(userId));
 
   return res
     .status(StatusCode.OK)
@@ -56,18 +28,7 @@ const approveUserRequest = asyncHandler(async (req, res) => {
 
 const deleteUserRequest = asyncHandler(async (req, res) => {
   const { userId } = req.params;
-
-  const deletedUserRequest = await User.findOneAndUpdate(
-    { serialNumber: userId, isActive: false, isEmailVerified: true },
-    { $set: { isEmailVerified: false } },
-    { new: true },
-  );
-
-  if (!deletedUserRequest) {
-    throw new ApiError(StatusCode.BADREQUEST, errorMessages.userNotExistWithRequest);
-  }
-
-  const pendingUsers = await User.find(pendingUserQuery, projectionFields.getPendingApprovals);
+  const pendingUsers = await userService.rejectUser(Number(userId));
 
   return res
     .status(StatusCode.OK)
@@ -78,8 +39,9 @@ const getUsersWithFinancialDataPerMonthPerYear = asyncHandler(async (req, res) =
   const { month, year } = req.query;
   const { month: validMonth, year: validYear } = validateYearMonthParams(month, year);
 
-  const entries = await FinancialEntry.aggregate(
-    buildUserFinancialAggregation(validMonth, validYear),
+  const entries = await financialEntryService.getUsersFinancialDataForMonthYear(
+    validMonth,
+    validYear,
   );
   return res
     .status(StatusCode.OK)
@@ -92,7 +54,7 @@ const getLoanTakenUsersInGivenMonthYear = asyncHandler(async (req, res) => {
   const { month, year } = req.query;
   const { month: validMonth, year: validYear } = validateYearMonthParams(month, year);
 
-  const entries = await FinancialEntry.aggregate(buildUsersWithLoanInMonth(validMonth, validYear));
+  const entries = await financialEntryService.getLoanTakenUsersForMonthYear(validMonth, validYear);
   return res
     .status(StatusCode.OK)
     .json(new ApiResponse(StatusCode.OK, entries, successMessages.loanTakenUsersforMonthYear));
@@ -111,42 +73,19 @@ const insertEntry = asyncHandler(async (req, res) => {
 
   validateInsertEntryInput(serialNumber, year, month);
 
-  const user = await User.findOne({ serialNumber });
-  if (!user) {
-    throw new ApiError(StatusCode.NOTFOUND, errorMessages.userNotExist);
-  }
-
-  const currentYear = await createFinancialYear(user._id + EmptyValue, year);
-
-  const existingEntry = await FinancialEntry.findOne({
-    yearId: currentYear._id,
-    month,
-  });
-  if (existingEntry) {
-    throw new ApiError(StatusCode.CONFLICTS, errorMessages.alreadyEntryFound + `${month} ${year}`);
-  }
-
-  const lastPending = await getLastPendingLoan(user._id + EmptyValue, year, month);
-
-  const interest = (lastPending * 1) / 100;
-  const total = collection + interest + instalment + fine;
-  const pendingLoan = lastPending + loanTaken - instalment;
-
-  const newEntry = await FinancialEntry.create({
-    yearId: currentYear._id,
+  const result = await financialEntryService.insertEntry({
+    serialNumber,
+    year,
     month,
     loanTaken,
     collection,
     fine,
-    interest,
     instalment,
-    total,
-    pendingLoan,
   });
 
   return res
     .status(StatusCode.OK)
-    .json(new ApiResponse(StatusCode.OK, { newEntry }, successMessages.entryInserted));
+    .json(new ApiResponse(StatusCode.OK, result, successMessages.entryInserted));
 });
 
 const editEntry = asyncHandler(async (req, res) => {
@@ -154,111 +93,30 @@ const editEntry = asyncHandler(async (req, res) => {
 
   validateInsertEntryInput(serialNumber, year, month);
 
-  const user = await User.findOne({ serialNumber });
-  if (!user) {
-    throw new ApiError(StatusCode.NOTFOUND, errorMessages.userNotExist);
-  }
-
-  const currentYear = await createFinancialYear(user._id + EmptyValue, year);
-
-  const existingEntry = await FinancialEntry.findOne({
-    yearId: currentYear._id,
+  const result = await financialEntryService.editEntry({
+    serialNumber,
+    year,
     month,
+    collection,
+    loanTaken,
+    fine,
+    instalment,
   });
-
-  if (!existingEntry) {
-    throw new ApiError(StatusCode.NOTFOUND, errorMessages.entryNotFound + `${month} ${year}`);
-  }
-
-  const updateFields: Partial<{
-    collection: number;
-    loanTaken: number;
-    fine: number;
-    instalment: number;
-    total: number;
-    pendingLoan: number;
-  }> = {};
-
-  const basePendingLoan = Number(existingEntry.pendingLoan);
-  const baseCollection = Number(existingEntry.collection);
-  updateFields.pendingLoan = basePendingLoan;
-  updateFields.collection = baseCollection;
-  if (collection !== undefined && collection !== baseCollection) {
-    updateFields.collection = collection;
-  }
-  if (loanTaken !== undefined) {
-    updateFields.loanTaken = loanTaken;
-    updateFields.pendingLoan =
-      updateFields.pendingLoan - Number(existingEntry.loanTaken - loanTaken);
-  }
-  if (fine !== undefined) updateFields.fine = fine;
-  if (instalment !== undefined) updateFields.instalment = instalment;
-  if (instalment !== undefined && fine !== undefined) {
-    updateFields.total =
-      instalment + fine + updateFields.collection + Number(existingEntry.interest);
-    updateFields.pendingLoan =
-      updateFields.pendingLoan + Number(existingEntry.instalment) - instalment;
-  } else if (instalment !== undefined) {
-    updateFields.pendingLoan =
-      updateFields.pendingLoan + Number(existingEntry.instalment) - instalment;
-    updateFields.total =
-      instalment +
-      Number(existingEntry.fine) +
-      updateFields.collection +
-      Number(existingEntry.interest);
-  } else if (fine !== undefined) {
-    updateFields.total =
-      Number(existingEntry.instalment) +
-      fine +
-      updateFields.collection +
-      Number(existingEntry.interest);
-  } else if (collection !== undefined) {
-    updateFields.total =
-      Number(existingEntry.instalment) +
-      Number(existingEntry.fine) +
-      collection +
-      Number(existingEntry.interest);
-  }
-
-  const updatedEntry = await FinancialEntry.findOneAndUpdate(
-    { yearId: currentYear._id, month },
-    { $set: updateFields },
-    { new: true },
-  );
 
   return res
     .status(StatusCode.OK)
-    .json(new ApiResponse(StatusCode.OK, { updatedEntry }, successMessages.entryUpdated));
+    .json(new ApiResponse(StatusCode.OK, result, successMessages.entryUpdated));
 });
 
 const depositSocietyForUser = asyncHandler(async (req, res) => {
   const { serialNumber, year, month } = req.body;
   validateInsertEntryInput(serialNumber, year, month);
 
-  const user = await User.findOne({ serialNumber });
-  if (!user) {
-    throw new ApiError(StatusCode.NOTFOUND, errorMessages.userNotExist);
-  }
+  const result = await financialEntryService.depositSocietyForUser({ serialNumber, year, month });
 
-  const currentYear = await createFinancialYear(user._id + EmptyValue, year);
-
-  const existingEntry = await FinancialEntry.findOne({
-    yearId: currentYear._id,
-    month,
-  });
-
-  if (!existingEntry) {
-    throw new ApiError(StatusCode.NOTFOUND, errorMessages.entryNotFound + `${month} ${year}`);
-  }
-
-  const updatedEntry = await FinancialEntry.findOneAndUpdate(
-    { yearId: currentYear._id, month },
-    { $set: { status: EntryStatus.DEPOSIT } },
-    { new: true },
-  );
   return res
     .status(StatusCode.OK)
-    .json(new ApiResponse(StatusCode.OK, { updatedEntry }, successMessages.societyDeposit));
+    .json(new ApiResponse(StatusCode.OK, result, successMessages.societyDeposit));
 });
 
 const autoInsertEntriesForMonthYear = asyncHandler(async (req, res) => {
@@ -268,58 +126,12 @@ const autoInsertEntriesForMonthYear = asyncHandler(async (req, res) => {
     throw new ApiError(StatusCode.BADREQUEST, errorMessages.InvalidMonthAndYear);
   }
 
-  const users = await User.find({ isEmailVerified: true});
-  const insertedEntries = [];
-  for (const user of users) {
-    const currentYear = await createFinancialYear(user._id + EmptyValue, year);
-    const existingEntry = await FinancialEntry.findOne({
-      yearId: currentYear._id,
-      month,
-    });
-
-    if (existingEntry) {
-      continue; // Skip to next user
-    }
-
-    const [prevMonth, prevYear] = getPreviousMonthYear(month, year);
-    const prevYearDataEntry = await createFinancialYear(user._id + EmptyValue, prevYear);
-
-    const lastEntry = await FinancialEntry.findOne({
-      yearId: prevYearDataEntry?._id,
-      month: prevMonth,
-    });
-
-    const loanTaken = 0;
-    const collection = lastEntry?.collection ?? 1000;
-    const instalment = lastEntry?.instalment || 0;
-    const fine = lastEntry?.fine || 0;
-
-    const lastPending = await getLastPendingLoan(user._id + EmptyValue, year, month);
-    const interest = (lastPending * 1) / 100;
-    const total = collection + interest + instalment + fine;
-    const pendingLoan = lastPending + loanTaken - instalment;
-
-    const newEntry = await FinancialEntry.create({
-      yearId: currentYear._id,
-      month,
-      loanTaken,
-      collection,
-      fine,
-      interest,
-      instalment,
-      total,
-      pendingLoan,
-    });
-
-    insertedEntries.push(newEntry);
-  }
+  const result = await financialEntryService.autoInsertEntriesForMonthYear(year, month);
 
   return res.status(StatusCode.OK).json(
     new ApiResponse(
       StatusCode.OK,
-      {
-        count: insertedEntries.length,
-      },
+      result,
       `${successMessages.autoInsertEntry}${month} ${year}`,
     ),
   );
@@ -332,30 +144,14 @@ const freezeEntriesForMonthYear = asyncHandler(async (req, res) => {
     throw new ApiError(StatusCode.BADREQUEST, errorMessages.InvalidMonthAndYear);
   }
 
-  let updatedCount = 0;
-  const users = await User.find({ isEmailVerified: true, isActive: true });
-  for (const user of users) {
-    const yearDoc = await createFinancialYear(user._id + EmptyValue, year);
-    if (!yearDoc) continue;
-
-    const entry = await FinancialEntry.findOne({
-      yearId: yearDoc._id,
-      month,
-    });
-
-    if (entry && !entry.isFreezed) {
-      entry.isFreezed = true;
-      await entry.save();
-      updatedCount++;
-    }
-  }
+  const result = await financialEntryService.freezeEntriesForMonthYear(year, month);
 
   return res
     .status(StatusCode.OK)
     .json(
       new ApiResponse(
         StatusCode.OK,
-        { updatedCount },
+        result,
         `${successMessages.autoInsertEntry}${month} ${year}`,
       ),
     );

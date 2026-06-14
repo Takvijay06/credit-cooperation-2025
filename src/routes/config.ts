@@ -5,6 +5,7 @@ export const Routes = {
       register: "/register",
       login: "/login",
       verifyOtp: "/verify-otp",
+      resendOtp: "/resend-otp",
     },
   },
   admin: {
